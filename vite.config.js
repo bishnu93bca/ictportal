@@ -7,6 +7,7 @@ export default defineConfig({
         laravel({
             input: ['resources/js/app.jsx'],
             refresh: true,
+            buildDirectory: 'build',
         }),
         react(),
         tailwindcss(),
