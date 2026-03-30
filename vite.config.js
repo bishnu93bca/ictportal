@@ -10,4 +10,8 @@ export default defineConfig({
         }),
         react(),
     ],
+    build: {
+        outDir: 'build',   // 👈 THIS creates root build folder
+        emptyOutDir: true,
+    },
 });
