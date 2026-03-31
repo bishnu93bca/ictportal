@@ -149,24 +149,72 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 ---
 
-## 🔗 API Versioning Strategy
+## 📡 API Reference
 
-All APIs are structured under version control:
+**Base URL:** `http://localhost:8000/api/v1`
 
+**Headers for protected routes:**
 ```
-/api/v1/
+Authorization: Bearer {token}
+Content-Type: application/json
+Accept: application/json
 ```
 
-### Example Endpoints
+**Standard response envelope:**
+```json
+{ "success": true, "message": "...", "data": { ... } }
+```
 
+**Paginated response:**
+```json
+{
+  "success": true,
+  "data": {
+    "data": [ ... ],
+    "meta": { "current_page": 1, "last_page": 5, "per_page": 15, "total": 72 }
+  }
+}
 ```
-POST   /api/v1/auth/login
-POST   /api/v1/auth/register
-GET    /api/v1/user/profile
-GET    /api/v1/users
-POST   /api/v1/users
-GET    /api/v1/roles
+
+---
+
+### 🔐 Authentication
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/auth/login` | ❌ | Returns Bearer token |
+| POST | `/auth/register` | ❌ | Register user |
+| POST | `/auth/logout` | ✅ | Invalidate token |
+| GET | `/auth/me` | ✅ | Current user + permissions |
+| PUT | `/auth/profile` | ✅ | Update profile |
+| POST | `/auth/change-password` | ✅ | Change password |
+| POST | `/auth/forgot-password` | ❌ | Send OTP to email |
+| POST | `/auth/reset-password` | ❌ | Reset with OTP |
+
+<details>
+<summary>📄 Login example</summary>
+
+**Request:**
+```json
+POST /auth/login
+{ "email": "admin@sms.com", "password": "password" }
 ```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "1|abc123xyz...",
+    "user": {
+      "id": 1, "name": "Admin", "email": "admin@sms.com",
+      "role": "admin",
+      "permissions": ["view-students", "create-students", "view-teachers", ...]
+    }
+  }
+}
+```
+</details>
 
 ---
 
