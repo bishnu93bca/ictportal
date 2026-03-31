@@ -1,59 +1,300 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ICT Portal Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
 
-## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<div align="center">
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+[![Laravel](https://img.shields.io/badge/Laravel-13.x-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://mysql.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-## Learning Laravel
+**A modern full-stack **Laravel 13 + React (Vite)** based **Role-Based Access Control (RBAC)** ICT Portal Management System with API versioning, modular architecture, and scalable frontend integration.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+[🚀 Live Demo](#) • [📖 API Docs](#-api-reference) • [🐛 Report Bug](../../issues) • [✨ Request Feature](../../issues)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+</div>
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🚀 Tech Stack
 
-### Premium Partners
+### Backend
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+* Laravel 13.x
+* PHP 8.2+
+* MySQL / PostgreSQL
+* REST API Architecture
+* API Versioning: `/api/v1/`
+* Laravel Sanctum / JWT Authentication
 
-## Contributing
+### Frontend
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+* React (Vite)
+* Tailwind CSS
+* Axios (API Communication)
+* React Router DOM
+* Redux Toolkit / Zustand (optional)
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 📁 Project Structure
 
-## Security Vulnerabilities
+## 1. Laravel Backend (Core Project)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   └── Api/
+│   │   │       └── V1/
+│   │   │           ├── AuthController.php
+│   │   │           ├── UserController.php
+│   │   │           ├── RoleController.php
+│   │   │           └── DashboardController.php
+│   │   ├── Middleware/
+│   │   └── Requests/
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Role.php
+│   │   └── Permission.php
+│   ├── Providers/
+│
+├── bootstrap/
+├── config/
+├── database/
+│   ├── migrations/
+│   └── seeders/
+├── routes/
+│   ├── web.php
+│   ├── api.php
+│   └── api/
+│       └── v1.php
+├── resources/
+│   ├── views/                 # Blade (optional)
+│   └── js/                    # React entry (Vite)
+├── storage/
+├── tests/
+├── vendor/
+├── .env
+├── composer.json
+└── vite.config.js
+```
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 2. React Frontend (Inside Laravel /resources/js)
+
+```
+├── resources/js/
+│   ├── components/        # Reusable UI components
+│   ├── pages/             # Application pages
+│   │   ├── auth/
+│   │   ├── dashboard/
+│   │   ├── users/
+│   │   └── roles/
+│   ├── services/          # Axios API services
+│   ├── router/            # React Router config
+│   ├── store/             # Redux Toolkit / Zustand
+│   ├── hooks/             # Custom hooks
+│   ├── App.jsx
+│   └── main.jsx
+├── package.json
+└── node_modules/
+```
+
+---
+
+## 3. Build & Tooling
+
+```
+vite.config.js
+postcss.config.js
+tailwind.config.js
+webpack.mix.js (legacy optional)
+public/                   # Compiled assets output
+```
+
+---
+
+## 🔐 Role-Based Access Control (RBAC)
+
+### Roles
+
+* Super Admin
+* Admin
+* Manager
+* Staff
+* Viewer
+
+### Permissions Example
+
+* user.create
+* user.read
+* user.update
+* user.delete
+* role.manage
+* report.view
+
+### Middleware Example
+
+```php
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+});
+```
+
+---
+
+## 🔗 API Versioning Strategy
+
+All APIs are structured under version control:
+
+```
+/api/v1/
+```
+
+### Example Endpoints
+
+```
+POST   /api/v1/auth/login
+POST   /api/v1/auth/register
+GET    /api/v1/user/profile
+GET    /api/v1/users
+POST   /api/v1/users
+GET    /api/v1/roles
+```
+
+---
+
+## 🧠 Architecture Overview
+
+### Backend
+
+* MVC Architecture (Laravel)
+* Service Layer (Recommended)
+* Repository Pattern (Optional)
+* API Resource Transformers
+* Middleware-based Security
+
+### Frontend
+
+* Component-based React UI
+* Protected Routes (RBAC)
+* Centralized API Layer (Axios)
+* Lazy Loading Pages
+* State Management (Redux Toolkit / Zustand)
+
+---
+
+## 🔐 Authentication Flow
+
+1. User logs in via `/api/v1/auth/login`
+2. Server returns Sanctum/JWT token
+3. Token stored in localStorage or cookies
+4. Axios attaches token in headers
+5. Backend middleware validates request
+6. RBAC controls access
+
+---
+
+## 📊 Core Modules
+
+* Authentication Module
+* User Management Module
+* Role & Permission Module
+* ICT Asset Management Module
+* Reports & Analytics Module
+* Dashboard Module
+
+---
+
+## 🧪 Testing Strategy
+
+### Backend
+
+* PHPUnit
+* Pest PHP (optional)
+* API testing via Postman / Swagger
+
+### Frontend
+
+* React Testing Library
+* Component Testing
+
+---
+
+## 🛠️ Setup Instructions
+
+### Backend Setup
+
+```bash
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+```
+
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 🌐 Environment Configuration
+
+### Backend (.env)
+
+```
+APP_NAME="ICT Portal Management System"
+APP_URL=http://localhost:8000
+DB_DATABASE=ict_portal
+SANCTUM_STATEFUL_DOMAINS=localhost:5173
+```
+
+### Frontend (.env)
+
+```
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+```
+
+---
+
+## 🚀 Deployment Structure (Production)
+
+* Laravel served via Apache/Nginx
+* React built using Vite (`npm run build`)
+* Built assets served from `/public/build`
+* Secure API with HTTPS
+
+---
+
+## 📌 Future Enhancements
+
+* Multi-tenant architecture
+* Real-time notifications (WebSockets / Pusher)
+* Audit logs system
+* Advanced analytics dashboard
+* Mobile app (React Native)
+* AI-based reporting system
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 👨‍💻 Developer Notes
+
+This project follows modern **Laravel 13 + React Vite architecture** with strict **API versioning (/api/v1)** and enterprise-grade **RBAC security model** for scalable ICT portal management.
