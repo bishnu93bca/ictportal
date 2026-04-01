@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 import tailwindcss from "@tailwindcss/vite";
+import path from 'path';
+
 export default defineConfig({
     plugins: [
         laravel({
@@ -12,8 +14,13 @@ export default defineConfig({
         react(),
         tailwindcss(),
     ],
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, 'resources/js'),
+        },
+    },
     build: {
-        outDir: 'build',   // 👈 THIS creates root build folder
+        outDir: 'build',
         emptyOutDir: true,
     },
 });

@@ -1,0 +1,127 @@
+# =========================================================
+# 🧠 CURSOR AI OPTIMIZATION IGNORE FILE (ADVANCED)
+# Laravel + React/Vite + Enterprise System
+# =========================================================
+
+# ----------------------------
+# 🔴 SYSTEM / OS FILES
+# ----------------------------
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.cache
+
+# ----------------------------
+# 🔴 ENVIRONMENT FILES (SECURITY CRITICAL)
+# ----------------------------
+.env
+.env.*
+!.env.example
+
+# NEVER expose secrets to AI context
+config/*.php
+storage/oauth-private.key
+storage/oauth-public.key
+
+# ----------------------------
+# 🔴 LARAVEL CORE IGNORES
+# ----------------------------
+/vendor/
+/node_modules/
+/bootstrap/cache/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+
+# ----------------------------
+# 🔴 BUILD OUTPUTS (FRONTEND)
+# ----------------------------
+/public/build/
+/public/hot
+/dist/
+/build/
+/resources/js/dist/
+/vite.config.*.timestamp*
+
+# ----------------------------
+# 🔴 TEST & COVERAGE
+# ----------------------------
+/coverage/
+/.phpunit.result.cache
+/tests/_output/
+
+# ----------------------------
+# 🔴 IDE / EDITOR FILES
+# ----------------------------
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# ----------------------------
+# 🔴 GIT / VERSION CONTROL
+# ----------------------------
+.git/
+.gitignore
+.gitattributes
+
+# ----------------------------
+# 🔴 CACHE / TEMP FILES
+# ----------------------------
+*.cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ----------------------------
+# 🔴 LARAVEL DEBUG / TELEMETRY
+# ----------------------------
+storage/debugbar/
+storage/telescope/
+storage/logs/debug.log
+
+# ----------------------------
+# 🔴 FRONTEND FRAMEWORKS
+# ----------------------------
+/resources/js/node_modules/
+/resources/js/.cache/
+/resources/css/.cache/
+
+# ----------------------------
+# 🔴 DATABASE FILES (LOCAL DEV ONLY)
+# ----------------------------
+*.sqlite
+*.sqlite3
+database/*.db
+
+# ----------------------------
+# 🔴 DOCKER / DEVOPS
+# ----------------------------
+docker-compose.override.yml
+.env.docker
+
+# ----------------------------
+# 🔴 AI / CURSOR OPTIMIZATION
+# ----------------------------
+
+# Prevent AI from reading heavy or noisy generated files
+public/hot
+storage/*.key
+bootstrap/cache/*.php
+
+# Large auto-generated assets (avoid AI confusion)
+*.min.js
+*.min.css
+
+# ----------------------------
+# 🔴 OPTIONAL LARGE ASSETS (UNCOMMENT IF NEEDED)
+# ----------------------------
+ public/images/
+ storage/app/public/
+
+# =========================================================
+# 🚀 END OF CURSOR IGNORE RULES
+# =========================================================

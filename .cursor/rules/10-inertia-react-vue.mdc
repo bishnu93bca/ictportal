@@ -1,0 +1,12 @@
+# Inertia + React/Vue Rules
+
+## Inertia Overview
+Inertia bridges Laravel routes/controllers to JS frontends like React/Vue without separate API layers. :contentReference[oaicite:5]{index=5}
+
+## Folder Structure
+- resources/js/pages/ — Inertia pages
+- resources/js/components/ — UI components
+
+## Rules
+- Controllers return Inertia::render(…) with data.
+- Data passed to frontend should be minimal and serialized.

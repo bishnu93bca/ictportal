@@ -1,0 +1,86 @@
+# =========================================================
+# 🧠 CURSOR INDEX RULES (ENTERPRISE LARAVEL SYSTEM)
+# =========================================================
+
+# ---------------------------------------------------------
+# ⚡ HIGH PRIORITY (ALWAYS INDEX FIRST)
+# ---------------------------------------------------------
+
+app/
+routes/
+database/
+resources/
+config/
+
+# Business Logic Core
+app/Services/
+app/Actions/
+app/Domain/
+app/Http/Controllers/
+app/Http/Requests/
+
+# API Layer
+app/Http/Resources/
+app/Http/Middleware/
+
+# ---------------------------------------------------------
+# ⚠️ MEDIUM PRIORITY (INDEX BUT LOWER WEIGHT)
+# ---------------------------------------------------------
+
+app/Models/
+app/Events/
+app/Listeners/
+app/Jobs/
+app/Providers/
+
+resources/views/
+resources/js/
+
+# ---------------------------------------------------------
+# 🔵 LOW PRIORITY (INDEX ONLY IF NEEDED)
+# ---------------------------------------------------------
+
+tests/
+docs/
+storage/app/
+storage/logs/
+
+# ---------------------------------------------------------
+# ❌ EXCLUDE FROM AI INDEXING (VERY IMPORTANT)
+# ---------------------------------------------------------
+
+vendor/
+node_modules/
+bootstrap/cache/
+public/build/
+public/hot/
+storage/framework/
+.git/
+
+# Build artifacts
+*.min.js
+*.min.css
+
+# Environment & secrets
+.env
+.env.*
+storage/*.key
+
+# IDE files
+.idea/
+.vscode/
+
+# ---------------------------------------------------------
+# 🧠 AI OPTIMIZATION RULES
+# ---------------------------------------------------------
+
+# Focus AI understanding on:
+- Business logic (Services, Actions, Domain)
+- API structure
+- Controllers only as entry points
+- Database schema relationships
+
+# Avoid noise:
+- Compiled assets
+- Dependencies
+- Cache/session files

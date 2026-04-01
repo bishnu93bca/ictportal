@@ -1,0 +1,26 @@
+# API Design Standards
+
+## Structure
+/api/v1/resource
+
+## Response Format
+{
+  "success": true,
+  "message": "",
+  "data": {},
+  "errors": null
+}
+
+## Rules
+- Always use API Resources
+- Never return raw models
+- Always version APIs
+
+## Status Codes
+- 200 OK
+- 201 Created
+- 400 Bad Request
+- 401 Unauthorized
+- 403 Forbidden
+- 422 Validation Error
+- 500 Server Error

@@ -1,0 +1,15 @@
+# Frontend Overview (Laravel)
+
+## Laravel Frontend Options
+Laravel supports:
+- Blade + PHP templating
+- Livewire (server-driven UI)
+- Inertia with React/Vue/Svelte
+These allow flexible frontend choices depending on interactivity needs. :contentReference[oaicite:1]{index=1}
+
+## Asset Bundling
+Laravel uses Vite by default to bundle CSS/JS assets. :contentReference[oaicite:2]{index=2}
+
+## Rules
+- Choose one primary frontend strategy per feature.
+- Keep backend logic separate from UI rendering.

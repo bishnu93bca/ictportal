@@ -1,0 +1,18 @@
+# CORE DEVELOPMENT RULES
+
+## AI Behavior Rules
+- Always generate production-ready Laravel code.
+- Never output pseudo-code unless explicitly requested.
+- Prefer clean architecture over quick hacks.
+- Follow SOLID principles strictly.
+
+## Architecture Enforcement
+- Controllers = request handling only
+- Services = business logic
+- Actions = single responsibility tasks
+- Repositories = database abstraction (when needed)
+
+## Strict Rules
+- No raw DB queries in controllers
+- No logic inside Blade views
+- No validation inside controllers

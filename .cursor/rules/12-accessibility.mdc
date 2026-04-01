@@ -1,0 +1,12 @@
+# Accessibility Rules
+
+## WCAG Awareness
+- Follow WCAG accessibility standards in UI markup.
+- Use semantic HTML and ARIA attributes.
+
+## Blade Accessibility
+- Ensure form labels are tied to inputs.
+- Avoid inaccessible components.
+
+## Testing
+- Include accessibility checks in CI where possible.

@@ -1,0 +1,11 @@
+# Livewire Guidelines
+
+## When to Use
+- Use Livewire for dynamic UIs without a full JS framework. :contentReference[oaicite:4]{index=4}
+
+## Component Rules
+- Keep Livewire components focused (single responsibility).
+- Avoid complex business logic; use services.
+
+## Interaction
+- Use Alpine.js for small interactive enhancements.

@@ -1,0 +1,9 @@
+# Vite & Asset Rules
+
+## Vite Usage
+- Use Laravel’s Vite integration for JS/CSS bundling. :contentReference[oaicite:6]{index=6}
+
+## Rules
+- Separate vendor vs app assets.
+- Use environment-specific builds (development vs production).
+- Do not hardcode asset paths; use Vite helper functions.

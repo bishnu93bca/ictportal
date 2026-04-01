@@ -1,0 +1,19 @@
+# Coding Standards (Strict)
+
+## PSR Compliance
+- Must follow PSR-12 strictly.
+
+## Naming Rules
+- Class → PascalCase
+- Method → camelCase
+- Variable → camelCase
+- Constant → UPPER_SNAKE_CASE
+
+## Structure Rules
+- One class per file
+- No god classes (>300 lines not allowed)
+
+## Code Quality
+- No duplication (DRY enforced)
+- Early return pattern preferred
+- Avoid nested conditions (>3 levels forbidden)

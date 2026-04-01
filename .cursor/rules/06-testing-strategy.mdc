@@ -1,0 +1,22 @@
+# Testing Strategy (Enterprise Level)
+
+## Testing Stack
+- Pest preferred over PHPUnit
+
+## Unit Testing
+- Pure logic only
+- No DB dependency
+
+## Feature Testing
+- Full request lifecycle
+- Authentication included
+
+## Database Testing
+- Use factories only
+- Use RefreshDatabase trait
+
+## Coverage Rules
+- Critical flows MUST be 100% covered:
+  - Auth
+  - Payments
+  - User creation

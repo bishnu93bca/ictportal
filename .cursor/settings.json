@@ -1,0 +1,145 @@
+{
+  // =========================================================
+  // 🧠 CURSOR AI BEHAVIOR SETTINGS
+  // =========================================================
+
+  "cursor.ai.enable": true,
+  "cursor.ai.model": "gpt-5",
+  "cursor.ai.temperature": 0.2,
+  "cursor.ai.maxTokens": 4096,
+
+  // Make AI more strict and structured
+  "cursor.ai.strictMode": true,
+  "cursor.ai.rulesMode": "enterprise",
+
+  // Prefer architecture-first responses
+  "cursor.ai.preferences": {
+    "architectureFirst": true,
+    "securityFirst": true,
+    "performanceFirst": true
+  },
+
+  // =========================================================
+  // ⚡ EDITOR BEHAVIOR
+  // =========================================================
+
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "editor.suggestSelection": "first",
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+
+  // Clean UI for large projects
+  "explorer.compactFolders": false,
+
+  // =========================================================
+  // 🧩 LARAVEL DEVELOPMENT SETTINGS
+  // =========================================================
+
+  "files.associations": {
+    "*.blade.php": "blade",
+    "*.php": "php"
+  },
+
+  "emmet.includeLanguages": {
+    "blade": "html"
+  },
+
+  // =========================================================
+  // ⚡ FORMATTERS / LINTERS
+  // =========================================================
+
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  "[php]": {
+    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+  },
+
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // =========================================================
+  // 🚀 PERFORMANCE OPTIMIZATION
+  // =========================================================
+
+  "files.watcherExclude": {
+    "**/vendor/**": true,
+    "**/node_modules/**": true,
+    "**/storage/**": true,
+    "**/bootstrap/cache/**": true,
+    "**/public/build/**": true
+  },
+
+  "search.exclude": {
+    "**/vendor": true,
+    "**/node_modules": true,
+    "**/storage": true,
+    "**/public/build": true
+  },
+
+  // =========================================================
+  // 🔐 SECURITY & SAFE DEVELOPMENT
+  // =========================================================
+
+  "files.exclude": {
+    "**/.env": true,
+    "**/.env.*": true,
+    "**/storage/logs": true
+  },
+
+  // Prevent accidental exposure of sensitive files
+  "security.workspace.trust.enabled": true,
+
+  // =========================================================
+  // ⚛️ FRONTEND (VITE + REACT/VUE)
+  // =========================================================
+
+  "vite.autoStart": true,
+
+  "terminal.integrated.defaultProfile.osx": "zsh",
+
+  // =========================================================
+  // 🧠 CURSOR AI CONTEXT OPTIMIZATION
+  // =========================================================
+
+  "cursor.context.ignore": [
+    "**/node_modules",
+    "**/vendor",
+    "**/storage",
+    "**/public/build",
+    "**/.git"
+  ],
+
+  "cursor.context.maxFiles": 500,
+
+  // Prioritize source code over generated files
+  "cursor.context.priority": [
+    "app/",
+    "routes/",
+    "resources/",
+    "database/"
+  ],
+
+  // =========================================================
+  // 🧪 DEBUGGING
+  // =========================================================
+
+  "php.debug.executablePath": "/usr/bin/php",
+
+  "debug.allowBreakpointsEverywhere": true,
+
+  // =========================================================
+  // 🎯 FINAL QUALITY CONTROL
+  // =========================================================
+
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "all",
+  "editor.cursorSmoothCaretAnimation": true
+}

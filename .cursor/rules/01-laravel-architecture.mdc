@@ -1,0 +1,22 @@
+# Laravel Architecture Rules (Advanced)
+
+## Layered Structure
+- HTTP Layer → Controllers
+- Domain Layer → Services / Actions
+- Infrastructure → Repositories
+- Support Layer → Helpers, Traits
+
+## Service Pattern (Mandatory)
+- Every business logic MUST go into Service class.
+
+Example:
+UserService::createUser()
+
+## Action Pattern
+- Use Actions for single operations only.
+
+Example:
+CreateUserAction, SendEmailAction
+
+## Dependency Injection
+- All services must be injected via constructor.

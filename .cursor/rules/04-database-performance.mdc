@@ -1,0 +1,20 @@
+# Database Performance Rules
+
+## Query Optimization
+- Always use eager loading (with)
+- Avoid N+1 queries strictly
+
+## Indexing Rules
+- Index all foreign keys
+- Index frequently filtered columns
+
+## Query Rules
+- No DB::raw unless approved
+- Avoid heavy joins in API layer
+
+## Caching Strategy
+- Cache heavy read queries using Redis
+- Use cache tags for grouped invalidation
+
+## Pagination
+- Always paginate large datasets

@@ -1,0 +1,15 @@
+# Blade & Component Rules
+
+## Blade Best Practices
+- Use Blade templating for server-rendered views. :contentReference[oaicite:3]{index=3}
+- Avoid heavy logic in views; push logic to controllers/services.
+
+## Blade Components
+- Use components for reusable UI pieces.
+- Prefer class-based components for complex logic.
+- Use slots for flexible content injection.
+
+## Structure
+/resources/views/components/
+- buttons.blade.php
+- layout.blade.php

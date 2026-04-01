@@ -1,0 +1,24 @@
+# Security Hardening Rules
+
+## Input Security
+- All inputs must use FormRequest validation.
+- Reject unknown fields using validatedOnly() concept.
+
+## Authentication
+- Use Laravel Sanctum for SPA/API.
+- Use Policies for authorization.
+
+## Data Protection
+- Never expose internal IDs directly (use UUID or HashId).
+- Never return sensitive fields in API responses.
+
+## SQL Injection Protection
+- No raw SQL allowed unless parameterized.
+
+## XSS & CSRF
+- Blade escaping mandatory {{ }}
+- CSRF token required for all POST forms
+
+## File Security
+- Validate file type, size, and MIME strictly.
+- Store outside public directory.
