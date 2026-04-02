@@ -16,6 +16,8 @@ class EquipmentModelController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('categories.view'), 403);
+
         $query = EquipmentModel::with(['subCategory:id,name,slug,category_id', 'subCategory.category:id,name,slug']);
 
         if ($search = $request->string('search')->trim()->value()) {
@@ -75,8 +77,10 @@ class EquipmentModelController extends Controller
         ], 201);
     }
 
-    public function show(EquipmentModel $equipmentModel): JsonResponse
+    public function show(Request $request, EquipmentModel $equipmentModel): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('categories.view'), 403);
+
         return response()->json([
             'data' => $equipmentModel->load(['subCategory:id,name,slug,category_id', 'subCategory.category:id,name,slug']),
         ]);
@@ -102,7 +106,7 @@ class EquipmentModelController extends Controller
 
     public function destroy(Request $request, EquipmentModel $equipmentModel): JsonResponse
     {
-        abort_unless($request->user()->isSuperAdmin(), 403);
+        abort_unless($request->user()->hasPermission('categories.delete'), 403);
 
         if ($equipmentModel->complaints()->exists()) {
             return response()->json([

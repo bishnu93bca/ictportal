@@ -61,7 +61,7 @@ class Role extends Model
     /** Clear cached permissions for all users who hold this role. */
     public function flushPermissionCache(): void
     {
-        $this->users()->pluck('user_id')->each(function (int $userId) {
+        $this->users()->pluck('users.id')->each(function (int $userId) {
             \Illuminate\Support\Facades\Cache::forget("user_permissions_{$userId}");
         });
     }

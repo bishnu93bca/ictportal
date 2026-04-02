@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     use LogsActivity;
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', User::class);
@@ -34,9 +35,9 @@ class UserController extends Controller
         if ($search = $request->string('search')->trim()->value()) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('udise_code', 'like', "%{$search}%")
-                  ->orWhere('school_name', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('udise_code', 'like', "%{$search}%")
+                    ->orWhere('school_name', 'like', "%{$search}%");
             });
         }
 
@@ -74,7 +75,7 @@ class UserController extends Controller
         $payload['list_scope'] = $auth->isDistrictScopedAdmin()
             ? [
                 'district' => $auth->district,
-                'state'    => $auth->state,
+                'state' => $auth->state,
             ]
             : null;
 
@@ -141,7 +142,7 @@ class UserController extends Controller
      */
     public function trashed(Request $request): JsonResponse
     {
-        $this->authorize('forceDelete', new User());
+        $this->authorize('forceDelete', new User);
 
         $query = User::onlyTrashed()->select([
             'id', 'name', 'email', 'role', 'status', 'avatar', 'deleted_at',
@@ -150,7 +151,7 @@ class UserController extends Controller
         if ($search = $request->string('search')->trim()->value()) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -218,7 +219,7 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $auth     = $request->user();
+        $auth = $request->user();
         $district = $request->string('district')->trim()->value();
 
         $base = User::query()->forDistrictAdmin($auth);
@@ -251,32 +252,32 @@ class UserController extends Controller
 
     public function profile(Request $request): JsonResponse
     {
-        return response()->json(['user' => $request->user()]);
+        return response()->json(['user' => $request->user()->toApiArray()]);
     }
 
     public function updateProfile(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'          => ['sometimes', 'string', 'max:255'],
-            'phone'         => ['nullable', 'string', 'max:20'],
-            'avatar'        => ['nullable', 'string', 'max:500'],
-            'address'       => ['nullable', 'string'],
-            'city'          => ['nullable', 'string', 'max:100'],
-            'state'         => ['nullable', 'string', 'max:100'],
-            'country'       => ['nullable', 'string', 'max:100'],
-            'postal_code'   => ['nullable', 'string', 'max:20'],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'avatar' => ['nullable', 'string', 'max:500'],
+            'address' => ['nullable', 'string'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
             'date_of_birth' => ['nullable', 'date', 'before:today'],
-            'gender'        => ['nullable', 'string', 'in:male,female,other'],
-            'school_name'   => ['nullable', 'string', 'max:255'],
-            'udise_code'    => ['nullable', 'string', 'max:50'],
-            'password'      => ['sometimes', 'nullable', 'string', 'min:8', 'confirmed'],
+            'gender' => ['nullable', 'string', 'in:male,female,other'],
+            'school_name' => ['nullable', 'string', 'max:255'],
+            'udise_code' => ['nullable', 'string', 'max:50'],
+            'password' => ['sometimes', 'nullable', 'string', 'min:8', 'confirmed'],
             'email_notifications' => ['sometimes', 'boolean'],
-            'sms_notifications'   => ['sometimes', 'boolean'],
-            'push_notifications'  => ['sometimes', 'boolean'],
+            'sms_notifications' => ['sometimes', 'boolean'],
+            'push_notifications' => ['sometimes', 'boolean'],
         ]);
 
         if (isset($data['password']) && $data['password']) {
-            $data['password'] = \Illuminate\Support\Facades\Hash::make($data['password']);
+            $data['password'] = Hash::make($data['password']);
         } else {
             unset($data['password']);
         }
@@ -287,7 +288,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully.',
-            'user'    => $request->user()->fresh(),
+            'user' => $request->user()->fresh()->toApiArray(),
         ]);
     }
 }

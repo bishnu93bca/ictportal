@@ -14,7 +14,7 @@ class CategorySeeder extends Seeder
 {
     /** @var array<int, array{category: string, subcategory: string, model: string|null}> */
     private const CATALOG = [
-        ['category' => 'Computer Desktop', 'subcategory' => 'Acer', 'model' => 'Veriton X2680G'],
+        ['category' => 'Server', 'subcategory' => 'Acer', 'model' => 'Veriton X2680G'],
         ['category' => 'Thin Client', 'subcategory' => 'Acer', 'model' => 'E220 VERITON M26X1G'],
         ['category' => 'Multifunction Printer', 'subcategory' => 'Brother', 'model' => 'DCP-B7535DW'],
         ['category' => 'Web Camera', 'subcategory' => 'Zebronics', 'model' => 'Zeb-Crisp Pro'],

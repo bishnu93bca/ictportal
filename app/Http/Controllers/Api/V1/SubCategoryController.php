@@ -16,6 +16,8 @@ class SubCategoryController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('categories.view'), 403);
+
         $query = SubCategory::with('category:id,name,slug')->withCount('equipmentModels');
 
         if ($search = $request->string('search')->trim()->value()) {
@@ -61,8 +63,10 @@ class SubCategoryController extends Controller
         ], 201);
     }
 
-    public function show(SubCategory $subCategory): JsonResponse
+    public function show(Request $request, SubCategory $subCategory): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('categories.view'), 403);
+
         return response()->json(['data' => $subCategory->load('category:id,name,slug')]);
     }
 
@@ -84,7 +88,7 @@ class SubCategoryController extends Controller
 
     public function destroy(Request $request, SubCategory $subCategory): JsonResponse
     {
-        abort_unless($request->user()->isSuperAdmin(), 403, 'Only super admins can delete sub-categories.');
+        abort_unless($request->user()->hasPermission('categories.delete'), 403);
 
         if ($subCategory->equipmentModels()->exists()) {
             return response()->json([

@@ -10,14 +10,14 @@ class StoreCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isSuperAdmin();
+        return $this->user()->hasPermission('categories.create');
     }
 
     public function rules(): array
     {
         return [
-            'name'   => ['required', 'string', 'max:255'],
-            'slug'   => ['required', 'string', 'max:255', 'unique:categories,slug'],
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug'],
             'status' => ['sometimes', 'boolean'],
         ];
     }

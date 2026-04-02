@@ -10,16 +10,16 @@ class StoreSubCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isSuperAdmin();
+        return $this->user()->hasPermission('categories.create');
     }
 
     public function rules(): array
     {
         return [
             'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'name'        => ['required', 'string', 'max:255'],
-            'slug'        => ['required', 'string', 'max:255', 'unique:sub_categories,slug'],
-            'status'      => ['sometimes', 'boolean'],
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:sub_categories,slug'],
+            'status' => ['sometimes', 'boolean'],
         ];
     }
 }

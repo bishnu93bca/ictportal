@@ -11,7 +11,7 @@ class UpdateCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isSuperAdmin();
+        return $this->user()->hasPermission('categories.edit');
     }
 
     public function rules(): array
@@ -19,8 +19,8 @@ class UpdateCategoryRequest extends FormRequest
         $id = $this->route('category')?->id ?? $this->route('category');
 
         return [
-            'name'   => ['sometimes', 'string', 'max:255'],
-            'slug'   => ['sometimes', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($id)],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($id)],
             'status' => ['sometimes', 'boolean'],
         ];
     }

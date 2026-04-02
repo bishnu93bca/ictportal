@@ -11,7 +11,7 @@ class UpdateSubCategoryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isSuperAdmin();
+        return $this->user()->hasPermission('categories.edit');
     }
 
     public function rules(): array
@@ -20,9 +20,9 @@ class UpdateSubCategoryRequest extends FormRequest
 
         return [
             'category_id' => ['sometimes', 'integer', 'exists:categories,id'],
-            'name'        => ['sometimes', 'string', 'max:255'],
-            'slug'        => ['sometimes', 'string', 'max:255', Rule::unique('sub_categories', 'slug')->ignore($id)],
-            'status'      => ['sometimes', 'boolean'],
+            'name' => ['sometimes', 'string', 'max:255'],
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('sub_categories', 'slug')->ignore($id)],
+            'status' => ['sometimes', 'boolean'],
         ];
     }
 }

@@ -10,7 +10,7 @@ class UpdateEquipmentModelRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isSuperAdmin();
+        return $this->user()->hasPermission('categories.edit');
     }
 
     public function rules(): array

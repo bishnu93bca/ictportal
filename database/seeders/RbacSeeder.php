@@ -8,6 +8,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Cache;
 
 class RbacSeeder extends Seeder
 {
@@ -46,7 +47,7 @@ class RbacSeeder extends Seeder
             ['slug' => 'roles.delete',      'name' => 'Delete Roles'],
             ['slug' => 'roles.assign',      'name' => 'Assign Roles to Users'],
             ['slug' => 'permissions.view',  'name' => 'View Permissions'],
-            ['slug' => 'permissions.manage','name' => 'Manage Permissions'],
+            ['slug' => 'permissions.manage', 'name' => 'Manage Permissions'],
         ],
     ];
 
@@ -56,39 +57,41 @@ class RbacSeeder extends Seeder
      */
     private const ROLE_PERMISSIONS = [
         'super_admin' => '*', // wildcard — granted all at seeding time
-        'admin'       => [
+        'admin' => [
             'dashboard.view',
             'users.view', 'users.edit',
             'complaints.view', 'complaints.create', 'complaints.edit',
             'complaints.delete', 'complaints.manage-status',
-            'categories.view',
+            'categories.view', 'categories.create', 'categories.edit', 'categories.delete',
             'roles.view',
         ],
-        'manager'     => [
+        'manager' => [
             'dashboard.view',
             'users.view',
             'complaints.view', 'complaints.manage-status',
             'categories.view',
         ],
-        'teacher'     => [
+        'teacher' => [
             'dashboard.view',
             'complaints.view', 'complaints.create', 'complaints.edit', 'complaints.delete',
             'categories.view',
         ],
-        'staff'       => [
+        'staff' => [
             'dashboard.view',
             'complaints.view', 'complaints.create',
             'categories.view',
         ],
-        'student'     => [
+        'student' => [
             'dashboard.view',
             'complaints.view', 'complaints.create',
+            'categories.view',
         ],
-        'parent'      => [
+        'parent' => [
             'dashboard.view',
             'complaints.view', 'complaints.create',
+            'categories.view',
         ],
-        'guest'       => [
+        'guest' => [
             'dashboard.view',
         ],
     ];
@@ -103,7 +106,7 @@ class RbacSeeder extends Seeder
                 $perm = Permission::updateOrCreate(
                     ['slug' => $item['slug']],
                     [
-                        'name'  => $item['name'],
+                        'name' => $item['name'],
                         'group' => $group,
                     ]
                 );
@@ -116,7 +119,7 @@ class RbacSeeder extends Seeder
             $role = Role::updateOrCreate(
                 ['slug' => $slug],
                 [
-                    'name'      => ucwords(str_replace('_', ' ', $slug)),
+                    'name' => ucwords(str_replace('_', ' ', $slug)),
                     'is_system' => true,
                 ]
             );
@@ -144,12 +147,12 @@ class RbacSeeder extends Seeder
             $roleModel = Role::where('slug', $user->role)->first();
             if ($roleModel) {
                 \DB::table('user_roles')->insertOrIgnore([
-                    'user_id'     => $user->id,
-                    'role_id'     => $roleModel->id,
+                    'user_id' => $user->id,
+                    'role_id' => $roleModel->id,
                     'assigned_at' => now(),
                 ]);
                 // Flush any cached permissions
-                \Illuminate\Support\Facades\Cache::forget("user_permissions_{$user->id}");
+                Cache::forget("user_permissions_{$user->id}");
             }
         }
     }

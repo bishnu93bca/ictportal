@@ -10,7 +10,7 @@ class StoreEquipmentModelRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isSuperAdmin();
+        return $this->user()->hasPermission('categories.create');
     }
 
     public function rules(): array

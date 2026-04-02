@@ -15,7 +15,6 @@ use App\Services\AuditLogService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
@@ -23,14 +22,15 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     use LogsActivity;
+
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
+            'name' => $request->name,
+            'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role'     => $request->input('role', 'student'),
-            'status'   => 'active',
+            'role' => $request->input('role', 'student'),
+            'status' => 'active',
         ]);
 
         event(new Registered($user));
@@ -47,8 +47,8 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Registration successful.',
-            'token'   => $token,
-            'user'    => $user,
+            'token' => $token,
+            'user' => $user->toApiArray(),
         ], 201);
     }
 
@@ -73,8 +73,8 @@ class AuthController extends Controller
 
         // Update login metadata
         $user->update([
-            'last_login_at'        => now(),
-            'last_login_ip'        => $request->ip(),
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
             'failed_login_attempts' => 0,
         ]);
 
@@ -84,8 +84,8 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login successful.',
-            'token'   => $token,
-            'user'    => $user,
+            'token' => $token,
+            'user' => $user->toApiArray(),
         ]);
     }
 
@@ -101,7 +101,7 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => $request->user()]);
+        return response()->json(['user' => $request->user()->toApiArray()]);
     }
 
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse

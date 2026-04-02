@@ -16,20 +16,23 @@ use Illuminate\Support\Str;
 class CategoryController extends Controller
 {
     use LogsActivity;
+
     public function index(Request $request): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('categories.view'), 403);
+
         $query = Category::withCount('subCategories');
 
         if ($search = $request->string('search')->trim()->value()) {
             $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                ->orWhere('slug', 'like', "%{$search}%");
         }
 
         if ($request->filled('status') && $request->input('status') !== 'all') {
             $query->where('status', (bool) $request->input('status'));
         }
 
-        $sortBy  = in_array($request->input('sort_by'), ['name', 'slug', 'status', 'created_at'])
+        $sortBy = in_array($request->input('sort_by'), ['name', 'slug', 'status', 'created_at'])
                      ? $request->input('sort_by', 'created_at')
                      : 'created_at';
         $sortDir = $request->input('sort_dir', 'desc') === 'asc' ? 'asc' : 'desc';
@@ -54,7 +57,7 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request): JsonResponse
     {
-        $data         = $request->validated();
+        $data = $request->validated();
         $data['slug'] = Str::slug($data['slug'] ?? $data['name']);
 
         $category = Category::create($data);
@@ -64,19 +67,21 @@ class CategoryController extends Controller
 
         return response()->json([
             'message' => 'Category created successfully.',
-            'data'    => $category->loadCount('subCategories'),
+            'data' => $category->loadCount('subCategories'),
         ], 201);
     }
 
-    public function show(Category $category): JsonResponse
+    public function show(Request $request, Category $category): JsonResponse
     {
+        abort_unless($request->user()->hasPermission('categories.view'), 403);
+
         return response()->json(['data' => $category->loadCount('subCategories')]);
     }
 
     public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
     {
         $before = $category->toArray();
-        $data   = $request->validated();
+        $data = $request->validated();
 
         if (isset($data['slug'])) {
             $data['slug'] = Str::slug($data['slug']);
@@ -89,13 +94,13 @@ class CategoryController extends Controller
 
         return response()->json([
             'message' => 'Category updated successfully.',
-            'data'    => $category->fresh()->loadCount('subCategories'),
+            'data' => $category->fresh()->loadCount('subCategories'),
         ]);
     }
 
     public function destroy(Request $request, Category $category): JsonResponse
     {
-        abort_unless($request->user()->isSuperAdmin(), 403, 'Only super admins can delete categories.');
+        abort_unless($request->user()->hasPermission('categories.delete'), 403);
 
         if ($category->subCategories()->exists()) {
             return response()->json([

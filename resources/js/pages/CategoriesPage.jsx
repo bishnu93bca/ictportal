@@ -4,6 +4,7 @@ import api from '@/lib/axios'
 import { FolderOpen, FolderTree, Plus, Pencil, Trash2, Search, Eye, Package } from 'lucide-react'
 import { useCategoryStore } from '@/store/category'
 import { useAuthStore } from '@/store/auth'
+import { hasPermission } from '@/lib/permissions'
 import Modal from '@/components/ui/Modal'
 import DataTable from '@/components/ui/DataTable'
 import Pagination from '@/components/ui/Pagination'
@@ -438,23 +439,35 @@ function ViewModal({ isOpen, onClose, item, type }) {
   )
 }
 
-/* ─── Action buttons shared by both tabs ─────────────────────────── */
+/* ─── RBAC: categories.* (from auth user; super_admin has *) ───────── */
 
-function RowActions({ onView, onEdit, onDelete, readOnly }) {
+function useCategoryPermissions() {
+  const permissions = useAuthStore((s) => s.user?.permissions ?? [])
+  return {
+    canView: hasPermission(permissions, 'categories.view'),
+    canCreate: hasPermission(permissions, 'categories.create'),
+    canEdit: hasPermission(permissions, 'categories.edit'),
+    canDelete: hasPermission(permissions, 'categories.delete'),
+  }
+}
+
+/* ─── Action buttons shared by tabs ──────────────────────────────── */
+
+function RowActions({ onView, onEdit, onDelete, canEdit, canDelete }) {
   return (
     <div className="flex items-center justify-end gap-1">
-      <button title="View" onClick={onView} className="btn btn-ghost btn-icon text-slate-400 hover:text-blue-600">
+      <button title="View" type="button" onClick={onView} className="btn btn-ghost btn-icon text-slate-400 hover:text-blue-600">
         <Eye className="w-4 h-4" />
       </button>
-      {!readOnly && (
-        <>
-          <button title="Edit" onClick={onEdit} className="btn btn-ghost btn-icon text-slate-400 hover:text-amber-600">
-            <Pencil className="w-4 h-4" />
-          </button>
-          <button title="Delete" onClick={onDelete} className="btn btn-ghost btn-icon text-slate-400 hover:text-red-600">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </>
+      {canEdit && (
+        <button title="Edit" type="button" onClick={onEdit} className="btn btn-ghost btn-icon text-slate-400 hover:text-amber-600">
+          <Pencil className="w-4 h-4" />
+        </button>
+      )}
+      {canDelete && (
+        <button title="Delete" type="button" onClick={onDelete} className="btn btn-ghost btn-icon text-slate-400 hover:text-red-600">
+          <Trash2 className="w-4 h-4" />
+        </button>
       )}
     </div>
   )
@@ -463,7 +476,7 @@ function RowActions({ onView, onEdit, onDelete, readOnly }) {
 /* ─── Categories Tab ──────────────────────────────────────────────── */
 
 function CategoriesTab() {
-  const canMutate = useAuthStore((s) => s.user?.role === 'super_admin')
+  const { canView, canCreate, canEdit, canDelete } = useCategoryPermissions()
   const {
     categories, categoryMeta, categoriesLoading,
     fetchCategories, deleteCategory, updateCategory,
@@ -482,7 +495,10 @@ function CategoriesTab() {
     fetchCategories(params)
   }, [filters, fetchCategories])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    if (!canView) return
+    load()
+  }, [load, canView])
 
   const handleSearch = (e) => {
     clearTimeout(debounceRef.current)
@@ -533,7 +549,7 @@ function CategoriesTab() {
     },
     { label: 'Status', key: 'status', sortable: true,
       render: (row) => (
-        canMutate ? (
+        canEdit ? (
           <StatusToggle item={row} onToggle={handleToggleStatus} saving={toggling === row.id} />
         ) : (
           <StatusBadge active={row.status} />
@@ -548,7 +564,8 @@ function CategoriesTab() {
           onView={() => setModal({ type: 'view', item: row })}
           onEdit={() => setModal({ type: 'edit', item: row })}
           onDelete={() => handleDelete(row)}
-          readOnly={!canMutate}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
       ),
     },
@@ -556,21 +573,27 @@ function CategoriesTab() {
 
   return (
     <div>
+      {!canView && (
+        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg p-3 mb-4">
+          You do not have <span className="font-mono text-xs">categories.view</span>. Ask a super admin to assign category permissions to your role.
+        </p>
+      )}
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input ref={searchRef} className="input pl-9 w-full" placeholder="Search categories…"
-            defaultValue={filters.search} onChange={handleSearch} />
+            defaultValue={filters.search} onChange={handleSearch} disabled={!canView} />
         </div>
         <select className="input w-36" value={filters.status}
-          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}>
+          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}
+          disabled={!canView}>
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        {canMutate && (
-          <button className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
+        {canCreate && (
+          <button type="button" className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
             onClick={() => setModal({ type: 'add', item: null })}>
             <Plus className="w-4 h-4" /> Add Category
           </button>
@@ -615,7 +638,7 @@ function CategoriesTab() {
 /* ─── Sub-Categories Tab ──────────────────────────────────────────── */
 
 function SubCategoriesTab() {
-  const canMutate = useAuthStore((s) => s.user?.role === 'super_admin')
+  const { canView, canCreate, canEdit, canDelete } = useCategoryPermissions()
   const {
     subCategories, subCategoryMeta, subCategoriesLoading,
     allCategories, fetchAllCategories,
@@ -637,7 +660,10 @@ function SubCategoriesTab() {
     fetchSubCategories(params)
   }, [filters, fetchSubCategories])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    if (!canView) return
+    load()
+  }, [load, canView])
 
   const handleSearch = (e) => {
     clearTimeout(debounceRef.current)
@@ -695,7 +721,7 @@ function SubCategoriesTab() {
     },
     { label: 'Status', key: 'status', sortable: true,
       render: (row) => (
-        canMutate ? (
+        canEdit ? (
           <StatusToggle item={row} onToggle={handleToggleStatus} saving={toggling === row.id} />
         ) : (
           <StatusBadge active={row.status} />
@@ -710,7 +736,8 @@ function SubCategoriesTab() {
           onView={() => setModal({ type: 'view', item: row })}
           onEdit={() => setModal({ type: 'edit', item: row })}
           onDelete={() => handleDelete(row)}
-          readOnly={!canMutate}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
       ),
     },
@@ -718,26 +745,33 @@ function SubCategoriesTab() {
 
   return (
     <div>
+      {!canView && (
+        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg p-3 mb-4">
+          You do not have <span className="font-mono text-xs">categories.view</span>. Ask a super admin to assign category permissions to your role.
+        </p>
+      )}
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input className="input pl-9 w-full" placeholder="Search sub-categories…"
-            defaultValue={filters.search} onChange={handleSearch} />
+            defaultValue={filters.search} onChange={handleSearch} disabled={!canView} />
         </div>
         <select className="input w-44" value={filters.category_id}
-          onChange={(e) => setFilters((f) => ({ ...f, category_id: e.target.value, page: 1 }))}>
+          onChange={(e) => setFilters((f) => ({ ...f, category_id: e.target.value, page: 1 }))}
+          disabled={!canView}>
           <option value="">All Categories</option>
           {allCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select className="input w-36" value={filters.status}
-          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}>
+          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}
+          disabled={!canView}>
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        {canMutate && (
-          <button className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
+        {canCreate && (
+          <button type="button" className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
             onClick={() => setModal({ type: 'add', item: null })}>
             <Plus className="w-4 h-4" /> Add Sub-Category
           </button>
@@ -782,7 +816,7 @@ function SubCategoriesTab() {
 /* ─── Equipment Models Tab ────────────────────────────────────────── */
 
 function EquipmentModelsTab() {
-  const canMutate = useAuthStore((s) => s.user?.role === 'super_admin')
+  const { canView, canCreate, canEdit, canDelete } = useCategoryPermissions()
   const {
     equipmentModels,
     equipmentModelMeta,
@@ -805,14 +839,14 @@ function EquipmentModelsTab() {
   useEffect(() => { fetchAllCategories() }, [fetchAllCategories])
 
   useEffect(() => {
-    if (!filters.category_id) {
+    if (!canView || !filters.category_id) {
       setSubFilterOptions([])
       return
     }
     api.get('/v1/sub-categories', {
       params: { per_page: 200, category_id: filters.category_id, sort_by: 'name', sort_dir: 'asc' },
     }).then(({ data }) => setSubFilterOptions(data.data ?? [])).catch(() => setSubFilterOptions([]))
-  }, [filters.category_id])
+  }, [filters.category_id, canView])
 
   const load = useCallback(() => {
     const params = { page: filters.page, per_page: 10, sort_by: filters.sort_by, sort_dir: filters.sort_dir }
@@ -823,7 +857,10 @@ function EquipmentModelsTab() {
     fetchEquipmentModels(params)
   }, [filters, fetchEquipmentModels])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    if (!canView) return
+    load()
+  }, [load, canView])
 
   const handleSearch = (e) => {
     clearTimeout(debounceRef.current)
@@ -881,7 +918,7 @@ function EquipmentModelsTab() {
       render: (row) => <span className="font-mono text-xs text-slate-500">{row.slug}</span> },
     { label: 'Status', key: 'status', sortable: true,
       render: (row) => (
-        canMutate ? (
+        canEdit ? (
           <StatusToggle item={row} onToggle={handleToggleStatus} saving={toggling === row.id} />
         ) : (
           <StatusBadge active={row.status} />
@@ -896,7 +933,8 @@ function EquipmentModelsTab() {
           onView={() => setModal({ type: 'view', item: row })}
           onEdit={() => setModal({ type: 'edit', item: row })}
           onDelete={() => handleDelete(row)}
-          readOnly={!canMutate}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
       ),
     },
@@ -904,33 +942,40 @@ function EquipmentModelsTab() {
 
   return (
     <div>
+      {!canView && (
+        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg p-3 mb-4">
+          You do not have <span className="font-mono text-xs">categories.view</span>. Ask a super admin to assign category permissions to your role.
+        </p>
+      )}
       <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input className="input pl-9 w-full" placeholder="Search models…"
-            defaultValue={filters.search} onChange={handleSearch} />
+            defaultValue={filters.search} onChange={handleSearch} disabled={!canView} />
         </div>
         <select className="input w-44" value={filters.category_id}
           onChange={(e) => setFilters((f) => ({
             ...f, category_id: e.target.value, sub_category_id: '', page: 1,
-          }))}>
+          }))}
+          disabled={!canView}>
           <option value="">All Categories</option>
           {allCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select className="input w-48" value={filters.sub_category_id}
-          disabled={!filters.category_id}
+          disabled={!filters.category_id || !canView}
           onChange={(e) => setFilters((f) => ({ ...f, sub_category_id: e.target.value, page: 1 }))}>
           <option value="">All sub-categories</option>
           {subFilterOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         <select className="input w-36" value={filters.status}
-          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}>
+          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}
+          disabled={!canView}>
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        {canMutate && (
-          <button className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
+        {canCreate && (
+          <button type="button" className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
             onClick={() => setModal({ type: 'add', item: null })}>
             <Plus className="w-4 h-4" /> Add Model
           </button>

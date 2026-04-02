@@ -289,4 +289,16 @@ class User extends Authenticatable
     {
         Cache::forget("user_permissions_{$this->id}");
     }
+
+    /**
+     * User JSON for API clients (includes RBAC slugs for dynamic UI).
+     *
+     * @return array<string, mixed>
+     */
+    public function toApiArray(): array
+    {
+        return array_merge($this->toArray(), [
+            'permissions' => $this->getAllPermissions(),
+        ]);
+    }
 }
