@@ -17,7 +17,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     public const ROLES = [
         'super_admin',
@@ -66,16 +66,16 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'          => 'datetime',
-            'two_factor_confirmed_at'    => 'datetime',
-            'last_login_at'              => 'datetime',
-            'locked_until'               => 'datetime',
-            'date_of_birth'              => 'date',
-            'password'                   => 'hashed',
-            'email_notifications'        => 'boolean',
-            'sms_notifications'          => 'boolean',
-            'push_notifications'         => 'boolean',
-            'failed_login_attempts'      => 'integer',
+            'email_verified_at' => 'datetime',
+            'two_factor_confirmed_at' => 'datetime',
+            'last_login_at' => 'datetime',
+            'locked_until' => 'datetime',
+            'date_of_birth' => 'date',
+            'password' => 'hashed',
+            'email_notifications' => 'boolean',
+            'sms_notifications' => 'boolean',
+            'push_notifications' => 'boolean',
+            'failed_login_attempts' => 'integer',
         ];
     }
 
@@ -141,6 +141,38 @@ class User extends Authenticatable
         return $this->districtMatches($target->district);
     }
 
+    /**
+     * District admin (role admin, active) for a given district — used for coordinator / copy templates.
+     *
+     * @return array{name: string, phone: ?string, email: string, district: ?string}|null
+     */
+    public static function districtAdminPayload(?string $district): ?array
+    {
+        if ($district === null || trim($district) === '') {
+            return null;
+        }
+
+        $normalized = mb_strtolower(trim($district));
+
+        $admin = static::query()
+            ->where('role', 'admin')
+            ->where('status', 'active')
+            ->whereRaw('LOWER(TRIM(COALESCE(users.district, ""))) = ?', [$normalized])
+            ->orderBy('id')
+            ->first(['id', 'name', 'email', 'phone', 'district']);
+
+        if ($admin === null) {
+            return null;
+        }
+
+        return [
+            'name' => $admin->name,
+            'phone' => $admin->phone,
+            'email' => $admin->email,
+            'district' => $admin->district,
+        ];
+    }
+
     /** Whether this admin may view/update a complaint filed by a teacher (district match). */
     public function canManageComplaint(Complaint $complaint): bool
     {
@@ -197,18 +229,24 @@ class User extends Authenticatable
 
     public function hasPermission(string $slug): bool
     {
-        if ($this->isSuperAdmin()) return true;
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
 
         return in_array($slug, $this->getAllPermissions(), true);
     }
 
     public function hasAnyPermission(string ...$slugs): bool
     {
-        if ($this->isSuperAdmin()) return true;
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
 
         $userPerms = $this->getAllPermissions();
         foreach ($slugs as $slug) {
-            if (in_array($slug, $userPerms, true)) return true;
+            if (in_array($slug, $userPerms, true)) {
+                return true;
+            }
         }
 
         return false;

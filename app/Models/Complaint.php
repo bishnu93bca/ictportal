@@ -24,6 +24,8 @@ class Complaint extends Model
         'udise_code',
         'category_id',
         'sub_category_id',
+        'equipment_model_id',
+        'serial_number',
         'title',
         'description',
         'status',
@@ -57,6 +59,11 @@ class Complaint extends Model
     public function subCategory(): BelongsTo
     {
         return $this->belongsTo(SubCategory::class, 'sub_category_id');
+    }
+
+    public function equipmentModel(): BelongsTo
+    {
+        return $this->belongsTo(EquipmentModel::class, 'equipment_model_id');
     }
 
     public function attachments(): HasMany

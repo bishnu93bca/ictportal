@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Paperclip } from 'lucide-react'
+import { Paperclip, Phone, Copy, Check } from 'lucide-react'
+import api from '@/lib/axios'
+import { buildComplaintCopyText, coordinatorForComplaint } from '@/lib/complaintCopy'
 import { useComplaintStore } from '@/store/complaint'
 import { useCategoryStore } from '@/store/category'
 import { useAuthStore } from '@/store/auth'
@@ -26,10 +28,11 @@ function StatusBadge({ status }) {
 }
 
 function InfoRow({ label, value }) {
+  const empty = value === undefined || value === null || value === ''
   return (
     <div>
       <dt className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">{label}</dt>
-      <dd className="text-sm text-slate-700 font-medium">{value || '—'}</dd>
+      <dd className="text-sm text-slate-700 font-medium">{empty ? '—' : value}</dd>
     </div>
   )
 }
@@ -46,6 +49,14 @@ export default function ManageComplaintsPage() {
   const [statusForm, setStatusForm]   = useState({ status: '', admin_note: '' })
   const [isSaving, setSaving]         = useState(false)
   const [detailModal, setDetailModal] = useState(null)
+  const [districtCoordinator, setDistrictCoordinator] = useState({ name: '', phone: '' })
+  const [copyDone, setCopyDone] = useState(false)
+
+  useEffect(() => {
+    api.get('/v1/portal-config')
+      .then(({ data }) => setDistrictCoordinator(data.district_coordinator ?? { name: '', phone: '' }))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const params = { page: filters.page, per_page: 15 }
@@ -54,6 +65,36 @@ export default function ManageComplaintsPage() {
     if (filters.search)      params.search      = filters.search
     fetchComplaints(params)
   }, [filters, fetchComplaints])
+
+  const detailCoord = detailModal
+    ? coordinatorForComplaint(detailModal, districtCoordinator)
+    : { name: '', phone: '' }
+
+  const copyComplaintDetails = async (c) => {
+    const coord = coordinatorForComplaint(c, districtCoordinator)
+    const text = buildComplaintCopyText({
+      schoolName:        c.school_name,
+      udiseCode:         c.udise_code,
+      district:          c.user?.district,
+      address:           c.user?.address,
+      complainantName:   c.complainant_name,
+      complainantPhone:  c.user?.phone,
+      coordinatorName:   coord.name,
+      coordinatorPhone:  coord.phone,
+      brandName:         c.sub_category?.name,
+      modelNo:           c.equipment_model?.name,
+      machineSerialNo:   c.serial_number,
+      exactProblem:      c.description,
+    })
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopyDone(true)
+      toast.success('Copied to clipboard.')
+      setTimeout(() => setCopyDone(false), 2000)
+    } catch {
+      toast.error('Could not copy. Select the text below manually.')
+    }
+  }
 
   const openStatusModal = (complaint) => {
     setSelected(complaint)
@@ -299,6 +340,7 @@ export default function ManageComplaintsPage() {
           isOpen
           title="Complaint Detail"
           onClose={() => setDetailModal(null)}
+          size="lg"
         >
           <div className="space-y-4 text-sm">
             {/* Complainant identity */}
@@ -307,6 +349,20 @@ export default function ManageComplaintsPage() {
               <InfoRow label="School Name"      value={detailModal.school_name} />
               <InfoRow label="UDISE Code"       value={detailModal.udise_code} />
               <InfoRow label="Account"          value={detailModal.user?.email} />
+              <InfoRow
+                label="Mobile"
+                value={
+                  detailModal.user?.phone ? (
+                    <a href={`tel:${detailModal.user.phone}`} className="text-blue-600 hover:underline inline-flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5" /> {detailModal.user.phone}
+                    </a>
+                  ) : '—'
+                }
+              />
+              <InfoRow label="District" value={detailModal.user?.district} />
+              <div className="col-span-2">
+                <InfoRow label="Address" value={detailModal.user?.address} />
+              </div>
             </div>
 
             {/* Status & title */}
@@ -316,14 +372,83 @@ export default function ManageComplaintsPage() {
                 <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
                   {detailModal.category && <span>{detailModal.category.name}</span>}
                   {detailModal.sub_category && <span className="text-slate-300">/ {detailModal.sub_category.name}</span>}
+                  {detailModal.equipment_model && (
+                    <span className="text-slate-300">/ {detailModal.equipment_model.name}</span>
+                  )}
                 </div>
               </div>
               <StatusBadge status={detailModal.status} />
             </div>
 
+            {(detailModal.serial_number || detailModal.equipment_model) && (
+              <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 rounded-lg p-3 border border-slate-100">
+                <InfoRow label="Brand (sub-category)" value={detailModal.sub_category?.name} />
+                <InfoRow label="Model" value={detailModal.equipment_model?.name} />
+                <div className="col-span-2">
+                  <InfoRow label="Machine serial no." value={detailModal.serial_number} />
+                </div>
+              </div>
+            )}
+
             <p className="text-slate-600 whitespace-pre-wrap leading-relaxed">
               {detailModal.description}
             </p>
+
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-2">
+              <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide">District coordinator (district admin)</p>
+              {detailModal.district_admin ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <InfoRow label="Name" value={detailModal.district_admin.name} />
+                  <InfoRow
+                    label="Phone"
+                    value={
+                      detailModal.district_admin.phone ? (
+                        <a href={`tel:${detailModal.district_admin.phone}`} className="text-blue-600 hover:underline inline-flex items-center gap-1">
+                          <Phone className="w-3.5 h-3.5" /> {detailModal.district_admin.phone}
+                        </a>
+                      ) : '—'
+                    }
+                  />
+                  <div className="sm:col-span-2">
+                    <InfoRow label="Email" value={detailModal.district_admin.email} />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-600">
+                  No district admin account found for this district. Helpdesk copy below uses portal coordinator settings when set.
+                </p>
+              )}
+            </div>
+
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-100 border-b border-slate-200">
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Copy format (helpdesk)</span>
+                <button
+                  type="button"
+                  onClick={() => copyComplaintDetails(detailModal)}
+                  className="btn btn-primary btn-sm flex items-center gap-1.5"
+                >
+                  {copyDone ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copyDone ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+              <pre className="text-xs text-slate-700 p-3 max-h-48 overflow-y-auto whitespace-pre-wrap font-mono bg-white">
+                {buildComplaintCopyText({
+                  schoolName:        detailModal.school_name,
+                  udiseCode:         detailModal.udise_code,
+                  district:          detailModal.user?.district,
+                  address:           detailModal.user?.address,
+                  complainantName:   detailModal.complainant_name,
+                  complainantPhone:  detailModal.user?.phone,
+                  coordinatorName:   detailCoord.name,
+                  coordinatorPhone:  detailCoord.phone,
+                  brandName:         detailModal.sub_category?.name,
+                  modelNo:           detailModal.equipment_model?.name,
+                  machineSerialNo:   detailModal.serial_number,
+                  exactProblem:      detailModal.description,
+                })}
+              </pre>
+            </div>
 
             {detailModal.admin_note && (
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">

@@ -16,12 +16,12 @@ class SubCategoryController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = SubCategory::with('category:id,name,slug');
+        $query = SubCategory::with('category:id,name,slug')->withCount('equipmentModels');
 
         if ($search = $request->string('search')->trim()->value()) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%");
             });
         }
 
@@ -33,7 +33,7 @@ class SubCategoryController extends Controller
             $query->where('status', (bool) $request->input('status'));
         }
 
-        $sortBy  = in_array($request->input('sort_by'), ['name', 'slug', 'status', 'created_at', 'category_id'])
+        $sortBy = in_array($request->input('sort_by'), ['name', 'slug', 'status', 'created_at', 'category_id'])
                      ? $request->input('sort_by', 'created_at')
                      : 'created_at';
         $sortDir = $request->input('sort_dir', 'desc') === 'asc' ? 'asc' : 'desc';
@@ -50,14 +50,14 @@ class SubCategoryController extends Controller
 
     public function store(StoreSubCategoryRequest $request): JsonResponse
     {
-        $data         = $request->validated();
+        $data = $request->validated();
         $data['slug'] = Str::slug($data['slug'] ?? $data['name']);
 
         $subCategory = SubCategory::create($data);
 
         return response()->json([
             'message' => 'Sub-category created successfully.',
-            'data'    => $subCategory->load('category:id,name,slug'),
+            'data' => $subCategory->load('category:id,name,slug'),
         ], 201);
     }
 
@@ -78,13 +78,19 @@ class SubCategoryController extends Controller
 
         return response()->json([
             'message' => 'Sub-category updated successfully.',
-            'data'    => $subCategory->fresh()->load('category:id,name,slug'),
+            'data' => $subCategory->fresh()->load('category:id,name,slug'),
         ]);
     }
 
     public function destroy(Request $request, SubCategory $subCategory): JsonResponse
     {
         abort_unless($request->user()->isSuperAdmin(), 403, 'Only super admins can delete sub-categories.');
+
+        if ($subCategory->equipmentModels()->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete sub-category with equipment models. Remove models first.',
+            ], 422);
+        }
 
         $subCategory->delete();
 

@@ -118,11 +118,18 @@ const router = createBrowserRouter([
             ],
           },
 
-          // ── Categories + Roles + Audit Logs: super_admin only ─────────
+          // ── Categories: super_admin + district admin (read/manage per API) ──
+          {
+            element: <RoleGuard roles={['super_admin', 'admin']} />,
+            children: [
+              { path: '/categories', element: <CategoriesPage /> },
+            ],
+          },
+
+          // ── Roles + Audit Logs: super_admin only ───────────────────────
           {
             element: <RoleGuard roles={['super_admin']} />,
             children: [
-              { path: '/categories', element: <CategoriesPage /> },
               { path: '/roles',      element: <RolesPage /> },
               { path: '/audit-logs', element: <AuditLogsPage /> },
             ],

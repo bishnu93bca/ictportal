@@ -41,7 +41,7 @@ export default function MainLayout() {
     ...(isAdmin      ? [{ path: '/complaints/manage', label: 'Manage Complaints', Icon: ClipboardList }] : []),
     ...(isManagement ? [{ path: '/users',             label: 'Users',             Icon: Users }]         : []),
     ...(isSuperAdmin ? [{ path: '/users/trashed',     label: 'Deleted Users',     Icon: Trash2 }]        : []),
-    ...(isSuperAdmin ? [{ path: '/categories',        label: 'Categories',          Icon: FolderTree   }] : []),
+    ...(isAdmin ? [{ path: '/categories',        label: 'Categories',          Icon: FolderTree   }] : []),
     ...(isSuperAdmin ? [{ path: '/roles',             label: 'Roles & Permissions', Icon: ShieldCheck  }] : []),
     ...(isSuperAdmin ? [{ path: '/audit-logs',        label: 'Audit Logs',          Icon: ShieldAlert  }] : []),
   ]

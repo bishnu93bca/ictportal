@@ -9,24 +9,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class SubCategory extends Model
+class EquipmentModel extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['category_id', 'name', 'slug', 'status'];
+    protected $fillable = ['sub_category_id', 'name', 'slug', 'status'];
 
     protected $casts = [
         'status' => 'boolean',
     ];
 
-    public function category(): BelongsTo
+    public function subCategory(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(SubCategory::class);
     }
 
-    public function equipmentModels(): HasMany
+    public function complaints(): HasMany
     {
-        return $this->hasMany(EquipmentModel::class);
+        return $this->hasMany(Complaint::class, 'equipment_model_id');
     }
 
     public function scopeActive($query)

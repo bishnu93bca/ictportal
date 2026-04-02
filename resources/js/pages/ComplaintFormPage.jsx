@@ -8,7 +8,14 @@ import { useComplaintStore } from '@/store/complaint'
 import { useCategoryStore } from '@/store/category'
 import Avatar from '@/components/ui/Avatar'
 
-const INITIAL_FORM = { title: '', description: '', category_id: '', sub_category_id: '' }
+const INITIAL_FORM = {
+  title: '',
+  description: '',
+  category_id: '',
+  sub_category_id: '',
+  equipment_model_id: '',
+  serial_number: '',
+}
 
 const ALLOWED_MIME_LABELS = 'JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP'
 const MAX_FILES    = 5
@@ -62,6 +69,7 @@ export default function ComplaintFormPage() {
     allSubCategories,
     fetchAllCategories,
     fetchSubCategoriesAll,
+    fetchEquipmentModelsForSubCategory,
   } = useCategoryStore()
 
   const fileInputRef = useRef(null)
@@ -74,6 +82,7 @@ export default function ComplaintFormPage() {
   const [pendingFiles, setPendingFiles]   = useState([])
   const [savedAttachments, setSaved]      = useState([])
   const [deletingIds, setDeletingIds]     = useState(new Set())
+  const [equipmentModels, setEquipmentModels] = useState([])
 
   // Load categories dropdown once on mount
   useEffect(() => { fetchAllCategories() }, [fetchAllCategories])
@@ -83,6 +92,21 @@ export default function ComplaintFormPage() {
     fetchSubCategoriesAll(form.category_id || null)
   }, [form.category_id, fetchSubCategoriesAll])
 
+  // When sub-category changes, load equipment models (brand / model list)
+  useEffect(() => {
+    let cancelled = false
+    const sid = form.sub_category_id
+    if (!sid) {
+      setEquipmentModels([])
+      return
+    }
+    ;(async () => {
+      const rows = await fetchEquipmentModelsForSubCategory(sid)
+      if (!cancelled) setEquipmentModels(rows)
+    })()
+    return () => { cancelled = true }
+  }, [form.sub_category_id, fetchEquipmentModelsForSubCategory])
+
   // Load existing complaint for edit
   useEffect(() => {
     if (!isEdit) return
@@ -91,10 +115,12 @@ export default function ComplaintFormPage() {
         const { data } = await api.get(`/v1/complaints/${id}`)
         const c = data.complaint
         setForm({
-          title:           c.title,
-          description:     c.description,
-          category_id:     c.category_id     ?? '',
-          sub_category_id: c.sub_category_id ?? '',
+          title:                c.title,
+          description:        c.description,
+          category_id:        c.category_id ?? '',
+          sub_category_id:    c.sub_category_id ?? '',
+          equipment_model_id: c.equipment_model_id != null ? String(c.equipment_model_id) : '',
+          serial_number:      c.serial_number ?? '',
         })
         setSaved(c.attachments ?? [])
       } catch {
@@ -112,8 +138,10 @@ export default function ComplaintFormPage() {
     setForm((prev) => ({
       ...prev,
       [name]: value,
-      // reset sub-category when parent category changes
-      ...(name === 'category_id' ? { sub_category_id: '' } : {}),
+      ...(name === 'category_id'
+        ? { sub_category_id: '', equipment_model_id: '' }
+        : {}),
+      ...(name === 'sub_category_id' ? { equipment_model_id: '' } : {}),
     }))
     setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
@@ -172,8 +200,10 @@ export default function ComplaintFormPage() {
       // Coerce IDs to numbers (select values are strings)
       const formPayload = {
         ...form,
-        category_id:     form.category_id     ? Number(form.category_id)     : undefined,
-        sub_category_id: form.sub_category_id ? Number(form.sub_category_id) : undefined,
+        category_id:        form.category_id ? Number(form.category_id) : undefined,
+        sub_category_id:    form.sub_category_id ? Number(form.sub_category_id) : undefined,
+        equipment_model_id: form.equipment_model_id ? Number(form.equipment_model_id) : undefined,
+        serial_number:      form.serial_number?.trim() || undefined,
       }
 
       if (isEdit) {
@@ -351,6 +381,43 @@ export default function ComplaintFormPage() {
                 {fieldErr('sub_category_id')}
               </div>
             )}
+
+            {form.sub_category_id && equipmentModels.length > 0 && (
+              <div>
+                <label className="label">
+                  Model
+                  <span className="text-slate-400 font-normal ml-1 text-xs">(optional)</span>
+                </label>
+                <select
+                  name="equipment_model_id"
+                  value={form.equipment_model_id}
+                  onChange={handleChange}
+                  className={`select ${errors.equipment_model_id ? 'border-red-400' : ''}`}
+                >
+                  <option value="">— Select model —</option>
+                  {equipmentModels.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+                {fieldErr('equipment_model_id')}
+              </div>
+            )}
+
+            <div>
+              <label className="label">
+                Machine / device serial number
+                <span className="text-slate-400 font-normal ml-1 text-xs">(optional)</span>
+              </label>
+              <input
+                name="serial_number"
+                value={form.serial_number}
+                onChange={handleChange}
+                className={`input font-mono text-sm ${errors.serial_number ? 'border-red-400' : ''}`}
+                placeholder="e.g. UXBGVSI322M3299351"
+                maxLength={255}
+              />
+              {fieldErr('serial_number')}
+            </div>
 
             <div>
               <label className="label">

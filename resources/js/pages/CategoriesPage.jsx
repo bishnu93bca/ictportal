@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { FolderOpen, FolderTree, Plus, Pencil, Trash2, Search, Eye } from 'lucide-react'
+import api from '@/lib/axios'
+import { FolderOpen, FolderTree, Plus, Pencil, Trash2, Search, Eye, Package } from 'lucide-react'
 import { useCategoryStore } from '@/store/category'
+import { useAuthStore } from '@/store/auth'
 import Modal from '@/components/ui/Modal'
 import DataTable from '@/components/ui/DataTable'
 import Pagination from '@/components/ui/Pagination'
@@ -260,12 +262,162 @@ function SubCategoryModal({ isOpen, onClose, initial, onSaved }) {
   )
 }
 
+/* ─── Equipment Model Form Modal ─────────────────────────────────── */
+
+function EquipmentModelModal({ isOpen, onClose, initial, onSaved }) {
+  const { createEquipmentModel, updateEquipmentModel } = useCategoryStore()
+  const isEdit = Boolean(initial)
+
+  const [form, setForm]             = useState({ sub_category_id: '', name: '', slug: '', status: true })
+  const [slugEdited, setSlugEdited] = useState(false)
+  const [subOptions, setSubOptions]   = useState([])
+  const [saving, setSaving]         = useState(false)
+  const [errors, setErrors]         = useState({})
+
+  useEffect(() => {
+    if (!isOpen) return
+    api.get('/v1/sub-categories', { params: { per_page: 500, sort_by: 'name', sort_dir: 'asc' } })
+      .then(({ data }) => setSubOptions(data.data ?? []))
+      .catch(() => setSubOptions([]))
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen) {
+      setForm({
+        sub_category_id: initial?.sub_category_id ?? '',
+        name:            initial?.name            ?? '',
+        slug:            initial?.slug            ?? '',
+        status:          initial?.status          ?? true,
+      })
+      setSlugEdited(isEdit)
+      setErrors({})
+    }
+  }, [isOpen, initial, isEdit])
+
+  const handleName = (e) => {
+    const name = e.target.value
+    setForm((f) => ({ ...f, name, slug: slugEdited ? f.slug : slugify(name) }))
+  }
+
+  const handleSlug = (e) => { setSlugEdited(true); setForm((f) => ({ ...f, slug: e.target.value })) }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const errs = {}
+    if (!form.sub_category_id) errs.sub_category_id = 'Select a sub-category.'
+    if (!form.name.trim())       errs.name = 'Model name is required.'
+    if (!form.slug.trim())       errs.slug = 'Slug is required.'
+    if (Object.keys(errs).length) { setErrors(errs); return }
+
+    setSaving(true)
+    try {
+      const payload = {
+        ...form,
+        sub_category_id: Number(form.sub_category_id),
+        slug: slugify(form.slug),
+      }
+      if (isEdit) { await updateEquipmentModel(initial.id, payload); toast.success('Equipment model updated.') }
+      else        { await createEquipmentModel(payload);              toast.success('Equipment model created.') }
+      onSaved(); onClose()
+    } catch (err) {
+      const msg = err.response?.data?.errors ?? err.response?.data?.message ?? 'Failed to save.'
+      if (typeof msg === 'object') {
+        const mapped = {}
+        Object.entries(msg).forEach(([k, v]) => { mapped[k] = Array.isArray(v) ? v[0] : v })
+        setErrors(mapped)
+      } else { toast.error(msg) }
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Edit Equipment Model' : 'Add Equipment Model'} size="md">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Sub-Category <span className="text-red-500">*</span>
+          </label>
+          <select
+            className={`input w-full ${errors.sub_category_id ? 'border-red-400' : ''}`}
+            value={form.sub_category_id}
+            onChange={(e) => setForm((f) => ({ ...f, sub_category_id: e.target.value }))}
+          >
+            <option value="">— Select —</option>
+            {subOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.category?.name ? `${s.category.name} → ${s.name}` : s.name}
+              </option>
+            ))}
+          </select>
+          {errors.sub_category_id && <p className="text-xs text-red-500 mt-1">{errors.sub_category_id}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Model name <span className="text-red-500">*</span>
+          </label>
+          <input
+            className={`input w-full ${errors.name ? 'border-red-400' : ''}`}
+            value={form.name}
+            onChange={handleName}
+            placeholder="e.g. Veriton X2680G"
+          />
+          {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Slug <span className="text-red-500">*</span></label>
+          <input
+            className={`input w-full font-mono text-sm ${errors.slug ? 'border-red-400' : ''}`}
+            value={form.slug}
+            onChange={handleSlug}
+          />
+          {errors.slug && <p className="text-xs text-red-500 mt-1">{errors.slug}</p>}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-700">Status</label>
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, status: !f.status }))}
+            className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${
+              form.status ? 'bg-blue-500' : 'bg-slate-300'
+            }`}
+          >
+            <span className={`inline-block h-4 w-4 mt-0.5 rounded-full bg-white shadow transition-transform ${
+              form.status ? 'translate-x-4' : 'translate-x-0.5'
+            }`} />
+          </button>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-sm">Cancel</button>
+          <button type="submit" disabled={saving} className="btn btn-primary btn-sm">
+            {saving ? 'Saving…' : isEdit ? 'Update' : 'Create'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 /* ─── View Modal ──────────────────────────────────────────────────── */
 
 function ViewModal({ isOpen, onClose, item, type }) {
   if (!item) return null
+  const title = type === 'category'
+    ? 'Category Details'
+    : type === 'equipment-model'
+      ? 'Equipment Model Details'
+      : 'Sub-Category Details'
   const rows = [
-    ...(type === 'subcategory' ? [{ label: 'Category', value: item.category?.name }] : []),
+    ...(type === 'subcategory' ? [
+      { label: 'Category', value: item.category?.name },
+      { label: 'Equipment models', value: item.equipment_models_count ?? 0 },
+    ] : []),
+    ...(type === 'equipment-model' ? [
+      { label: 'Category', value: item.sub_category?.category?.name },
+      { label: 'Sub-Category', value: item.sub_category?.name },
+    ] : []),
     { label: 'Name',  value: item.name },
     { label: 'Slug',  value: item.slug, mono: true },
     ...(type === 'category' ? [{ label: 'Sub-categories', value: item.sub_categories_count ?? 0 }] : []),
@@ -273,7 +425,7 @@ function ViewModal({ isOpen, onClose, item, type }) {
     { label: 'Created', value: item.created_at ? new Date(item.created_at).toLocaleDateString() : '—' },
   ]
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={type === 'category' ? 'Category Details' : 'Sub-Category Details'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <dl className="divide-y divide-slate-100">
         {rows.map(({ label, value, mono }) => (
           <div key={label} className="py-3 flex gap-4">
@@ -288,18 +440,22 @@ function ViewModal({ isOpen, onClose, item, type }) {
 
 /* ─── Action buttons shared by both tabs ─────────────────────────── */
 
-function RowActions({ onView, onEdit, onDelete }) {
+function RowActions({ onView, onEdit, onDelete, readOnly }) {
   return (
     <div className="flex items-center justify-end gap-1">
-      <button title="View"   onClick={onView}   className="btn btn-ghost btn-icon text-slate-400 hover:text-blue-600">
-        <Eye    className="w-4 h-4" />
+      <button title="View" onClick={onView} className="btn btn-ghost btn-icon text-slate-400 hover:text-blue-600">
+        <Eye className="w-4 h-4" />
       </button>
-      <button title="Edit"   onClick={onEdit}   className="btn btn-ghost btn-icon text-slate-400 hover:text-amber-600">
-        <Pencil className="w-4 h-4" />
-      </button>
-      <button title="Delete" onClick={onDelete} className="btn btn-ghost btn-icon text-slate-400 hover:text-red-600">
-        <Trash2 className="w-4 h-4" />
-      </button>
+      {!readOnly && (
+        <>
+          <button title="Edit" onClick={onEdit} className="btn btn-ghost btn-icon text-slate-400 hover:text-amber-600">
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button title="Delete" onClick={onDelete} className="btn btn-ghost btn-icon text-slate-400 hover:text-red-600">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </>
+      )}
     </div>
   )
 }
@@ -307,6 +463,7 @@ function RowActions({ onView, onEdit, onDelete }) {
 /* ─── Categories Tab ──────────────────────────────────────────────── */
 
 function CategoriesTab() {
+  const canMutate = useAuthStore((s) => s.user?.role === 'super_admin')
   const {
     categories, categoryMeta, categoriesLoading,
     fetchCategories, deleteCategory, updateCategory,
@@ -376,7 +533,11 @@ function CategoriesTab() {
     },
     { label: 'Status', key: 'status', sortable: true,
       render: (row) => (
-        <StatusToggle item={row} onToggle={handleToggleStatus} saving={toggling === row.id} />
+        canMutate ? (
+          <StatusToggle item={row} onToggle={handleToggleStatus} saving={toggling === row.id} />
+        ) : (
+          <StatusBadge active={row.status} />
+        )
       ),
     },
     { label: 'Created', key: 'created_at', sortable: true,
@@ -384,9 +545,10 @@ function CategoriesTab() {
     { label: 'Actions', key: '_actions', thClass: 'text-right',
       render: (row) => (
         <RowActions
-          onView   ={() => setModal({ type: 'view', item: row })}
-          onEdit   ={() => setModal({ type: 'edit', item: row })}
+          onView={() => setModal({ type: 'view', item: row })}
+          onEdit={() => setModal({ type: 'edit', item: row })}
           onDelete={() => handleDelete(row)}
+          readOnly={!canMutate}
         />
       ),
     },
@@ -407,10 +569,12 @@ function CategoriesTab() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        <button className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
-          onClick={() => setModal({ type: 'add', item: null })}>
-          <Plus className="w-4 h-4" /> Add Category
-        </button>
+        {canMutate && (
+          <button className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
+            onClick={() => setModal({ type: 'add', item: null })}>
+            <Plus className="w-4 h-4" /> Add Category
+          </button>
+        )}
       </div>
 
       {/* DataTable */}
@@ -451,6 +615,7 @@ function CategoriesTab() {
 /* ─── Sub-Categories Tab ──────────────────────────────────────────── */
 
 function SubCategoriesTab() {
+  const canMutate = useAuthStore((s) => s.user?.role === 'super_admin')
   const {
     subCategories, subCategoryMeta, subCategoriesLoading,
     allCategories, fetchAllCategories,
@@ -521,9 +686,20 @@ function SubCategoriesTab() {
       render: (row) => <span className="font-medium text-slate-800">{row.name}</span> },
     { label: 'Slug', key: 'slug', sortable: true,
       render: (row) => <span className="font-mono text-xs text-slate-500">{row.slug}</span> },
+    { label: 'Models', key: 'equipment_models_count',
+      render: (row) => (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800">
+          {row.equipment_models_count ?? 0}
+        </span>
+      ),
+    },
     { label: 'Status', key: 'status', sortable: true,
       render: (row) => (
-        <StatusToggle item={row} onToggle={handleToggleStatus} saving={toggling === row.id} />
+        canMutate ? (
+          <StatusToggle item={row} onToggle={handleToggleStatus} saving={toggling === row.id} />
+        ) : (
+          <StatusBadge active={row.status} />
+        )
       ),
     },
     { label: 'Created', key: 'created_at', sortable: true,
@@ -531,9 +707,10 @@ function SubCategoriesTab() {
     { label: 'Actions', key: '_actions', thClass: 'text-right',
       render: (row) => (
         <RowActions
-          onView   ={() => setModal({ type: 'view', item: row })}
-          onEdit   ={() => setModal({ type: 'edit', item: row })}
+          onView={() => setModal({ type: 'view', item: row })}
+          onEdit={() => setModal({ type: 'edit', item: row })}
           onDelete={() => handleDelete(row)}
+          readOnly={!canMutate}
         />
       ),
     },
@@ -559,10 +736,12 @@ function SubCategoriesTab() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        <button className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
-          onClick={() => setModal({ type: 'add', item: null })}>
-          <Plus className="w-4 h-4" /> Add Sub-Category
-        </button>
+        {canMutate && (
+          <button className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
+            onClick={() => setModal({ type: 'add', item: null })}>
+            <Plus className="w-4 h-4" /> Add Sub-Category
+          </button>
+        )}
       </div>
 
       {/* DataTable */}
@@ -600,11 +779,204 @@ function SubCategoriesTab() {
   )
 }
 
+/* ─── Equipment Models Tab ────────────────────────────────────────── */
+
+function EquipmentModelsTab() {
+  const canMutate = useAuthStore((s) => s.user?.role === 'super_admin')
+  const {
+    equipmentModels,
+    equipmentModelMeta,
+    equipmentModelsLoading,
+    fetchEquipmentModels,
+    deleteEquipmentModel,
+    updateEquipmentModel,
+    allCategories,
+    fetchAllCategories,
+  } = useCategoryStore()
+
+  const [filters, setFilters]   = useState({
+    search: '', status: 'all', category_id: '', sub_category_id: '', page: 1, sort_by: 'created_at', sort_dir: 'desc',
+  })
+  const [modal, setModal]       = useState({ type: null, item: null })
+  const [toggling, setToggling] = useState(null)
+  const debounceRef             = useRef(null)
+  const [subFilterOptions, setSubFilterOptions] = useState([])
+
+  useEffect(() => { fetchAllCategories() }, [fetchAllCategories])
+
+  useEffect(() => {
+    if (!filters.category_id) {
+      setSubFilterOptions([])
+      return
+    }
+    api.get('/v1/sub-categories', {
+      params: { per_page: 200, category_id: filters.category_id, sort_by: 'name', sort_dir: 'asc' },
+    }).then(({ data }) => setSubFilterOptions(data.data ?? [])).catch(() => setSubFilterOptions([]))
+  }, [filters.category_id])
+
+  const load = useCallback(() => {
+    const params = { page: filters.page, per_page: 10, sort_by: filters.sort_by, sort_dir: filters.sort_dir }
+    if (filters.search)           params.search = filters.search
+    if (filters.category_id)      params.category_id = filters.category_id
+    if (filters.sub_category_id)  params.sub_category_id = filters.sub_category_id
+    if (filters.status !== 'all') params.status = filters.status === 'active' ? 1 : 0
+    fetchEquipmentModels(params)
+  }, [filters, fetchEquipmentModels])
+
+  useEffect(() => { load() }, [load])
+
+  const handleSearch = (e) => {
+    clearTimeout(debounceRef.current)
+    const val = e.target.value
+    debounceRef.current = setTimeout(() => setFilters((f) => ({ ...f, search: val, page: 1 })), 350)
+  }
+
+  const handleSort = (key) => setFilters((f) => ({
+    ...f, sort_by: key, page: 1,
+    sort_dir: f.sort_by === key && f.sort_dir === 'asc' ? 'desc' : 'asc',
+  }))
+
+  const handleToggleStatus = async (item) => {
+    setToggling(item.id)
+    try {
+      await updateEquipmentModel(item.id, { status: !item.status })
+      toast.success(`Model ${!item.status ? 'activated' : 'deactivated'}.`)
+      load()
+    } catch { toast.error('Failed to update status.') }
+    finally { setToggling(null) }
+  }
+
+  const handleDelete = async (item) => {
+    if (!confirm(`Delete model "${item.name}"?`)) return
+    try { await deleteEquipmentModel(item.id); toast.success('Equipment model deleted.'); load() }
+    catch (err) { toast.error(err.response?.data?.message ?? 'Failed to delete.') }
+  }
+
+  const columns = [
+    {
+      label: '#', key: '_no', thClass: 'w-10',
+      render: (_, idx) => (
+        <span className="text-xs text-slate-400">
+          {((equipmentModelMeta?.current_page ?? 1) - 1) * (equipmentModelMeta?.per_page ?? 10) + idx + 1}
+        </span>
+      ),
+    },
+    {
+      label: 'Category', key: 'category',
+      render: (row) => (
+        <span className="text-xs font-medium text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full">
+          {row.sub_category?.category?.name ?? '—'}
+        </span>
+      ),
+    },
+    {
+      label: 'Sub-Category', key: 'sub',
+      render: (row) => (
+        <span className="text-sm text-slate-800">{row.sub_category?.name ?? '—'}</span>
+      ),
+    },
+    { label: 'Model', key: 'name', sortable: true,
+      render: (row) => <span className="font-medium text-slate-800">{row.name}</span> },
+    { label: 'Slug', key: 'slug', sortable: true,
+      render: (row) => <span className="font-mono text-xs text-slate-500">{row.slug}</span> },
+    { label: 'Status', key: 'status', sortable: true,
+      render: (row) => (
+        canMutate ? (
+          <StatusToggle item={row} onToggle={handleToggleStatus} saving={toggling === row.id} />
+        ) : (
+          <StatusBadge active={row.status} />
+        )
+      ),
+    },
+    { label: 'Created', key: 'created_at', sortable: true,
+      render: (row) => <span className="text-xs text-slate-400">{new Date(row.created_at).toLocaleDateString()}</span> },
+    { label: 'Actions', key: '_actions', thClass: 'text-right',
+      render: (row) => (
+        <RowActions
+          onView={() => setModal({ type: 'view', item: row })}
+          onEdit={() => setModal({ type: 'edit', item: row })}
+          onDelete={() => handleDelete(row)}
+          readOnly={!canMutate}
+        />
+      ),
+    },
+  ]
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input className="input pl-9 w-full" placeholder="Search models…"
+            defaultValue={filters.search} onChange={handleSearch} />
+        </div>
+        <select className="input w-44" value={filters.category_id}
+          onChange={(e) => setFilters((f) => ({
+            ...f, category_id: e.target.value, sub_category_id: '', page: 1,
+          }))}>
+          <option value="">All Categories</option>
+          {allCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select className="input w-48" value={filters.sub_category_id}
+          disabled={!filters.category_id}
+          onChange={(e) => setFilters((f) => ({ ...f, sub_category_id: e.target.value, page: 1 }))}>
+          <option value="">All sub-categories</option>
+          {subFilterOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <select className="input w-36" value={filters.status}
+          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value, page: 1 }))}>
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        {canMutate && (
+          <button className="btn btn-primary btn-sm flex items-center gap-1.5 whitespace-nowrap"
+            onClick={() => setModal({ type: 'add', item: null })}>
+            <Plus className="w-4 h-4" /> Add Model
+          </button>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={equipmentModels}
+          isLoading={equipmentModelsLoading}
+          emptyMessage="No equipment models found."
+          sortBy={filters.sort_by}
+          sortDir={filters.sort_dir}
+          onSort={handleSort}
+        />
+      </div>
+
+      {equipmentModelMeta && equipmentModelMeta.last_page > 1 && (
+        <div className="mt-4">
+          <Pagination meta={equipmentModelMeta} onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))} />
+        </div>
+      )}
+
+      <EquipmentModelModal
+        isOpen={modal.type === 'add' || modal.type === 'edit'}
+        onClose={() => setModal({ type: null, item: null })}
+        initial={modal.type === 'edit' ? modal.item : null}
+        onSaved={load}
+      />
+      <ViewModal
+        isOpen={modal.type === 'view'}
+        onClose={() => setModal({ type: null, item: null })}
+        item={modal.item}
+        type="equipment-model"
+      />
+    </div>
+  )
+}
+
 /* ─── Page ────────────────────────────────────────────────────────── */
 
 const TABS = [
-  { id: 'categories',     label: 'Categories',     Icon: FolderOpen },
-  { id: 'sub-categories', label: 'Sub-Categories', Icon: FolderTree  },
+  { id: 'categories',       label: 'Categories',       Icon: FolderOpen },
+  { id: 'sub-categories',   label: 'Sub-Categories',   Icon: FolderTree  },
+  { id: 'equipment-models', label: 'Equipment Models', Icon: Package     },
 ]
 
 export default function CategoriesPage() {
@@ -614,7 +986,7 @@ export default function CategoriesPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-800">Categories</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage equipment categories and sub-categories.</p>
+        <p className="text-sm text-slate-500 mt-1">Manage categories, sub-categories (brands), and equipment models.</p>
       </div>
 
       <div className="flex gap-1 mb-6 border-b border-slate-200">
@@ -632,8 +1004,9 @@ export default function CategoriesPage() {
         ))}
       </div>
 
-      {activeTab === 'categories'     && <CategoriesTab />}
-      {activeTab === 'sub-categories' && <SubCategoriesTab />}
+      {activeTab === 'categories'       && <CategoriesTab />}
+      {activeTab === 'sub-categories'   && <SubCategoriesTab />}
+      {activeTab === 'equipment-models' && <EquipmentModelsTab />}
     </div>
   )
 }

@@ -11,20 +11,24 @@ use App\Http\Requests\Complaint\UpdateComplaintStatusRequest;
 use App\Http\Traits\LogsActivity;
 use App\Models\Complaint;
 use App\Models\ComplaintAttachment;
-use App\Services\AuditLogService;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class ComplaintController extends Controller
 {
     use LogsActivity;
+
     private const EAGER = [
-        'user:id,name,email,role,avatar,district',
+        'user:id,name,email,role,avatar,district,phone,address,state,school_name,udise_code',
         'resolver:id,name',
         'attachments',
         'category:id,name,slug',
         'subCategory:id,name,slug,category_id',
+        'equipmentModel:id,name,slug,sub_category_id',
     ];
 
     /**
@@ -57,11 +61,13 @@ class ComplaintController extends Controller
         if ($search = $request->string('search')->trim()->value()) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
         $complaints = $query->latest()->paginate((int) $request->input('per_page', 15));
+
+        $this->attachDistrictAdmins($complaints->getCollection());
 
         return response()->json($complaints);
     }
@@ -73,7 +79,7 @@ class ComplaintController extends Controller
         $complaint = Complaint::create([
             ...$request->validated(),
             'user_id' => $request->user()->id,
-            'status'  => 'pending',
+            'status' => 'pending',
         ]);
 
         // Handle file uploads
@@ -82,12 +88,13 @@ class ComplaintController extends Controller
         }
 
         $complaint->load(self::EAGER);
+        $this->attachDistrictAdmins(collect([$complaint]));
 
         $this->logCreate('complaints', "Complaint #{$complaint->id} created: \"{$complaint->title}\"",
             $complaint->toArray());
 
         return response()->json([
-            'message'   => 'Complaint submitted successfully.',
+            'message' => 'Complaint submitted successfully.',
             'complaint' => $complaint,
         ], 201);
     }
@@ -98,7 +105,16 @@ class ComplaintController extends Controller
 
         $complaint->load(self::EAGER);
 
-        return response()->json(['complaint' => $complaint]);
+        $districtAdmin = User::districtAdminPayload($complaint->user?->district);
+        $complaint->setAttribute('district_admin', $districtAdmin);
+
+        return response()->json([
+            'complaint' => $complaint,
+            'district_coordinator' => [
+                'name' => config('ictportal.district_coordinator_name'),
+                'phone' => config('ictportal.district_coordinator_phone'),
+            ],
+        ]);
     }
 
     public function update(UpdateComplaintRequest $request, Complaint $complaint): JsonResponse
@@ -112,7 +128,7 @@ class ComplaintController extends Controller
             $before, $complaint->fresh()->toArray());
 
         return response()->json([
-            'message'   => 'Complaint updated successfully.',
+            'message' => 'Complaint updated successfully.',
             'complaint' => $complaint->fresh(self::EAGER),
         ]);
     }
@@ -125,7 +141,7 @@ class ComplaintController extends Controller
         $this->authorize('update', $complaint);
 
         $request->validate([
-            'attachments'   => ['required', 'array', 'min:1', 'max:5'],
+            'attachments' => ['required', 'array', 'min:1', 'max:5'],
             'attachments.*' => [
                 'file',
                 'max:10240',
@@ -136,7 +152,7 @@ class ComplaintController extends Controller
         $uploaded = $this->storeFiles($complaint, $request->file('attachments'));
 
         return response()->json([
-            'message'     => 'Attachments uploaded.',
+            'message' => 'Attachments uploaded.',
             'attachments' => $uploaded,
         ], 201);
     }
@@ -165,8 +181,8 @@ class ComplaintController extends Controller
 
         $before = $complaint->only(['status', 'admin_note']);
         $complaint->update([
-            'status'      => $request->status,
-            'admin_note'  => $request->admin_note,
+            'status' => $request->status,
+            'admin_note' => $request->admin_note,
             'resolved_by' => $request->user()->id,
         ]);
 
@@ -176,7 +192,7 @@ class ComplaintController extends Controller
             $complaint->fresh()->only(['status', 'admin_note', 'resolved_by']));
 
         return response()->json([
-            'message'   => 'Complaint status updated.',
+            'message' => 'Complaint status updated.',
             'complaint' => $complaint->fresh(self::EAGER),
         ]);
     }
@@ -202,9 +218,32 @@ class ComplaintController extends Controller
     /**
      * Persist uploaded files and create ComplaintAttachment records.
      *
-     * @param  \Illuminate\Http\UploadedFile[]  $files
+     * @param  UploadedFile[]  $files
      * @return ComplaintAttachment[]
      */
+    private function attachDistrictAdmins(Collection $complaints): void
+    {
+        $cache = [];
+
+        foreach ($complaints as $complaint) {
+            $d = $complaint->user?->district;
+
+            if ($d === null || trim((string) $d) === '') {
+                $complaint->setAttribute('district_admin', null);
+
+                continue;
+            }
+
+            $key = mb_strtolower(trim((string) $d));
+
+            if (! array_key_exists($key, $cache)) {
+                $cache[$key] = User::districtAdminPayload($d);
+            }
+
+            $complaint->setAttribute('district_admin', $cache[$key]);
+        }
+    }
+
     private function storeFiles(Complaint $complaint, array $files): array
     {
         $saved = [];
@@ -214,10 +253,10 @@ class ComplaintController extends Controller
 
             $saved[] = ComplaintAttachment::create([
                 'complaint_id' => $complaint->id,
-                'file_name'    => $file->getClientOriginalName(),
-                'file_path'    => $path,
-                'file_size'    => $file->getSize(),
-                'mime_type'    => $file->getMimeType() ?? 'application/octet-stream',
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $path,
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
             ]);
         }
 

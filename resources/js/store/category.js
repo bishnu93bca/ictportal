@@ -18,6 +18,11 @@ export const useCategoryStore = create((set) => ({
   // ── Dropdown: sub-categories filtered by category ─────────────────
   allSubCategories: [],
 
+  // ── Equipment models (paginated admin list) ────────────────────────
+  equipmentModels: [],
+  equipmentModelMeta: null,
+  equipmentModelsLoading: false,
+
   // ── Category CRUD ──────────────────────────────────────────────────
   fetchCategories: async (params = {}) => {
     set({ categoriesLoading: true })
@@ -89,5 +94,46 @@ export const useCategoryStore = create((set) => ({
 
   deleteSubCategory: async (id) => {
     await api.delete(`/v1/sub-categories/${id}`)
+  },
+
+  // ── Equipment models ───────────────────────────────────────────────
+  fetchEquipmentModels: async (params = {}) => {
+    set({ equipmentModelsLoading: true })
+    try {
+      const { data } = await api.get('/v1/equipment-models', { params })
+      set({
+        equipmentModels: data.data,
+        equipmentModelMeta: data,
+        equipmentModelsLoading: false,
+      })
+    } catch {
+      set({ equipmentModelsLoading: false })
+      throw new Error('Failed to load equipment models.')
+    }
+  },
+
+  /** Active models for a sub-category (complaint form). */
+  fetchEquipmentModelsForSubCategory: async (subCategoryId) => {
+    if (!subCategoryId) return []
+    try {
+      const { data } = await api.get(`/v1/sub-categories/${subCategoryId}/equipment-models`)
+      return data.data ?? []
+    } catch {
+      return []
+    }
+  },
+
+  createEquipmentModel: async (payload) => {
+    const { data } = await api.post('/v1/equipment-models', payload)
+    return data.data
+  },
+
+  updateEquipmentModel: async (id, payload) => {
+    const { data } = await api.put(`/v1/equipment-models/${id}`, payload)
+    return data.data
+  },
+
+  deleteEquipmentModel: async (id) => {
+    await api.delete(`/v1/equipment-models/${id}`)
   },
 }))
